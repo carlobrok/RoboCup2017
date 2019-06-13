@@ -3,6 +3,8 @@ Code for our Lego NXT and arduino hybrid robot. The code is written for the Robo
 
 Our code from 2018: https://github.com/carlobrok/RoboCup2018
 
+***Attention***: The code is ***terribly written*** and was mainly developed in 2016 and 2017.
+This repo is just a demonstration of our work and should be thoroughly reworked when reused.
 
 ## Programmierung
 
