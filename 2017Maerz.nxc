@@ -1,0 +1,465 @@
+#define speed_aussen_flasche_fahren_rechts 80
+#define speed_aussen_flasche_fahren_links 80
+
+#define touchl touchsen[0]
+#define touchr touchsen[1]
+#define touchm touchsen[2]
+#define touchh touchsen[3]
+
+#define powerSchnell 100
+#define powerNormal 70
+#define powerLangsam 50
+#define powerRueck 50
+#define powerDrehen 60
+
+#define neigungX wert[0]
+#define neigungY wert[1]
+#define neigungZ wert[2]
+#define neigungRampeH -10
+
+
+// ===== VARIABLEN =====
+
+// BOOLEANS
+
+  bool rampeHoch = false;
+
+// EXTRA VARIABLEN
+
+  int powerVor = 70;
+  int extra = 2;
+  //string FlascheRichtung = "LINKS";
+
+// SENSOR 1
+
+  int Sensor1;
+  int sch1 = 87;
+  int wei1 = 63;
+  int sen1;
+
+// SENSOR 2
+
+  int sen2 = 150;
+
+  unsigned int rawRed2;
+  unsigned int rawBlue2;
+  unsigned int rawGreen2;
+  int RGB2;
+  int redProz2;
+  int blueProz2;
+  int greenProz2;
+
+
+// SENSOR 3
+
+  int sen3 = 150;
+
+  unsigned int rawRed3;
+  unsigned int rawBlue3;
+  unsigned int rawGreen3;
+  int RGB3;
+  int redProz3;
+  int blueProz3;
+  int greenProz3;
+
+
+// SENSOR 4
+
+  int Sensor4;
+  int sch4 = 87;
+  int wei4 = 59;
+  int sen4;
+
+
+// I2C-Kommunikation
+
+    byte adresse = 0x18;                                // Arduino Adresse
+    byte anzahl_bytes = 10;                             // Anzahl der von Arduinoboard erwarteten Daten/Zahlen
+    byte gesendet[];                                    // Array für gesendete Daten
+    byte empfangen[];                                   // Array für empfangene Daten*/
+    int wert[] = {0,0,0};                               // Array für empfangene Daten des Neigungs Sensors
+    int touchsen[] = {0,0,0,0};
+
+    int Lese_Arduino()
+    {
+      ArrayBuild(gesendet, adresse, 0x00);                               // Sende den Wert 0 zum Arduinoboard
+      I2CBytes(S1, gesendet, anzahl_bytes, empfangen);                        // I2C-Kommunikation
+      wert[0] = empfangen[0] - 128;
+      wert[1] = empfangen[1] - 128;
+      wert[2] = empfangen[2] - 128;
+      Sensor1 = empfangen[4];
+      Sensor4 = empfangen[3];
+      touchsen[0] = empfangen[5];                           // TOUCH LINKS
+      touchsen[1] = empfangen[6];                           // TOUCH RECHTS
+      touchsen[2] = empfangen[7];                           // TOUCH MITTE
+      touchsen[3] = empfangen[8];                           // TOUCH HINTEN
+      return(empfangen[0]);
+    }
+
+
+
+
+
+
+
+// ===== VOIDS ======
+  // VOR
+
+    void vor_nt()                                 // Vor NoTime
+    {
+      OnRevSync(OUT_AC, powerVor, 0);
+    }
+    void vor_t(int Zeit_vor)                      // Vor für Zeit
+    {
+      OnRevSync(OUT_AC, powerVor, 0);
+      Wait(Zeit_vor);
+    }
+
+  // RUECK
+
+    void rueck_nt()                               // Rueck NoTime
+    {
+      OnFwdSync(OUT_AC, powerRueck, 0);
+    }
+
+    void rueck_t(int Zeit_rueck)                  // Rueck für Zeit
+    {
+      OnFwdSync(OUT_AC, powerRueck, 0);
+      Wait(Zeit_rueck);
+    }
+
+  // RECHTS
+
+    void rechts_nt()                              // Rechts NoTime
+    {
+      OnFwd(OUT_C, powerDrehen);
+      OnRev(OUT_A, powerDrehen);
+    }
+
+    void rechts_t(int Zeit_rechts)                // Rechts für Zeit
+    {
+      OnFwd(OUT_C, powerDrehen);
+      OnRev(OUT_A, powerDrehen);
+      Wait(Zeit_rechts);
+    }
+
+  // LINKS
+
+    void links_nt()
+    {
+      OnFwd(OUT_A, powerDrehen);
+      OnRev(OUT_C, powerDrehen);
+    }
+    void links_t(int Zeit_links)
+    {
+      OnFwd(OUT_A, powerDrehen);
+      OnRev(OUT_C, powerDrehen);
+      Wait(Zeit_links);
+    }
+
+  // FLASCHE
+    // KURVE RECHTS
+
+    void flasche_kurve_rechts_nt()
+    {
+      OnRev(OUT_C, 23);
+      OnRev(OUT_A, speed_aussen_flasche_fahren_rechts);
+    }
+
+    // KURVE LINKS
+
+    void flasche_kurve_links_nt()
+    {
+      OnRev(OUT_C, 23);
+      OnRev(OUT_A, speed_aussen_flasche_fahren_links);
+    }
+
+  // KUGEL KÄFIG
+
+  void kaefigHoch()
+  {
+    OnFwd(OUT_B,100);
+    Wait(1000);
+    Off(OUT_B);
+  }
+
+  void kaefigRunter()
+  {
+    OnRev(OUT_B,100);
+    Wait(1000);
+    Off(OUT_B);
+  }
+
+  // DISPLAY
+
+    void display(bool startup_anzeige, bool werte_anzeigen) {
+      if(startup_anzeige == true)
+      {
+        ClearScreen();                                  // Display beim Starten
+        TextOut(0,LCD_LINE3,"     Starten     ");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"      .");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"      ..");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"      ...");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"      ....");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"      .....");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"       ....");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"        ...");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"         ..");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"          .");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"           ");
+        Wait(700);
+        ClearScreen();
+        kaefigHoch();
+      }
+      if(werte_anzeigen == true){
+        TextOut(1, LCD_LINE1, "LS1: " + NumToStr(Sensor1)+"   ");
+        TextOut(60 ,LCD_LINE1,"TL:" + NumToStr(touchl));
+        TextOut(1, LCD_LINE2, "LS2: " + NumToStr(RGB2)+"   ");
+        TextOut(60 ,LCD_LINE2,"TR:" + NumToStr(touchr));
+        TextOut(1, LCD_LINE3, "LS3: " + NumToStr(RGB3)+"   ");
+        TextOut(60 ,LCD_LINE3,"TM:" + NumToStr(touchm));
+        TextOut(1, LCD_LINE4, "LS4: " + NumToStr(Sensor4)+"   ");
+        TextOut(60 ,LCD_LINE4,"TH:" + NumToStr(touchh));
+        TextOut(1, LCD_LINE5, "NS-X: " + NumToStr(neigungX)+"   ");
+        TextOut(1, LCD_LINE6, "Tempo: " + NumToStr(powerVor) + "%");
+      }
+    }
+
+task msgReset()
+{
+  Wait(3000);
+  ClearLine(LCD_LINE8);
+  TextOut(1,LCD_LINE8,"MSG:");
+}
+
+void msg(string text) {
+  TextOut(1,LCD_LINE8,"MSG: " + text);
+  start msgReset;
+}
+
+    void sensorenInit() {
+      // SENSOR 1
+
+        sen1 = sch1 - extra;
+
+      // SENSOR 4
+
+        sen4 = sch4 - extra;
+
+        msg("SEN INIT");
+      // SENSOREN DEFINIEREN
+        SetSensorLowspeed(IN_1);                                             // Die I2C-Kommunikation wird für Port 1 initialisiert.
+        SetSensorColorFull(S2);
+        SetSensorColorFull(S3);
+        //SetSensorLight(IN_4);
+    }
+
+
+
+
+
+
+
+// ===== TASKS =====
+
+task werte()
+{
+  int daten = 0;
+  while (true) {
+    // RGB RAW WERTE   werden aktualisiert
+
+    rawRed2 = ColorSensorRaw(S2, INPUT_RED);
+    rawBlue2 = ColorSensorRaw(S2, INPUT_BLUE);
+    rawGreen2 = ColorSensorRaw(S2, INPUT_GREEN);
+    RGB2 = rawRed2 + rawBlue2 + rawGreen2;
+    redProz2 = (rawRed2 * 100) / RGB2;
+    blueProz2 = (rawBlue2 * 100) / RGB2;
+    greenProz2 = (rawGreen2 * 100) / RGB2;
+
+    rawRed3 = ColorSensorRaw(S3, INPUT_RED);
+    rawBlue3 = ColorSensorRaw(S3, INPUT_BLUE);
+    rawGreen3 = ColorSensorRaw(S3, INPUT_GREEN);
+    RGB3 = rawRed3 + rawBlue3 + rawGreen3;
+    redProz3 = (rawRed3 * 100) / RGB3;
+    blueProz3 = (rawBlue3 * 100) / RGB3;
+    greenProz3 = (rawGreen3 * 100) / RGB3;
+
+
+    // Arduino Daten lesen
+
+    daten = Lese_Arduino();
+
+
+    display(false, true);         // DISPLAY UPDATE. Nur werte
+  }
+}
+
+
+
+
+
+// MAIN TASK
+
+task main()
+{
+  TextOut(0,LCD_LINE1,"OKAY GOOGLE");
+  Wait(1000);
+  ClearScreen();
+  display(true, false);           // Starten anzeige
+  sensorenInit();
+  start werte;
+
+  while(true)
+  {
+    vor_nt();
+
+  // LINIE FAHREN
+
+    // INNEN
+
+    if(RGB2 < sen2)
+    {
+      if (rampeHoch == true) {
+        Off(OUT_AC);
+        for (int i = 0; i < 180 && RGB2 < sen2; i++) {
+          OnRev(OUT_C, powerVor);
+          Wait(1);
+        }
+      } else {
+        links_t(180);
+      }
+    }
+
+    if(RGB3 < sen3)
+    {
+      if (rampeHoch == true) {
+        Off(OUT_AC);
+        for (int i = 0; i < 180 && RGB3 < sen3; i++) {
+          OnRev(OUT_A, powerVor);
+          Wait(1);
+        }
+      } else {
+        rechts_t(180);
+      }
+    }
+
+    // GRÜN
+    if(greenProz2 > 40 && blueProz2 < 30 && redProz2 < 30)
+    {
+      vor_t(400);
+      links_t(1000);
+      msg("GRUEN L");
+    }
+
+    if(greenProz3 > 40 && blueProz3 < 30 && redProz3 < 30)
+    {
+      vor_t(400);
+      rechts_t(1000);
+      msg("GRUEN R");
+    }
+
+
+    // AUßEN
+
+    if(Sensor1 > sen1)
+    {
+      msg("SEN 1");
+      for (int i = 0; i < 350; i++) {
+        Wait(1);
+        links_nt();
+        if(greenProz3 > 40 && blueProz3 <= 30 && redProz3 <= 30)
+        {
+          vor_t(400);
+          rechts_t(1200);
+          msg("GRUEN R");
+          i = 400;
+        }
+        if (Sensor4 > sen4) {
+          rechts_t(400);
+          vor_t(300);
+          i = 400;
+        }
+      }
+    }
+
+    if(Sensor4 > sen4)
+    {
+      msg("SEN 4");
+      for (int i = 0; i < 350; i++) {
+        Wait(1);
+        rechts_nt();
+        if(greenProz2 > 40 && blueProz2 <= 30 && redProz2 <= 30)
+        {
+          vor_t(400);
+          links_t(1200);
+          msg("GRUEN L");
+          i = 400;
+        }
+        if (Sensor1 > sen1) {
+          links_t(400);
+          vor_t(300);
+          i = 400;
+        }
+      }
+    }
+
+
+  // FLASCHE
+  /*  if(touchl == 1)
+    {
+      RotateMotorEx(OUT_AC, powerRueck, 360, 0, true, true);
+      if (FlascheRichtung == "LINKS")
+      {
+        RotateMotorEx(OUT_AC, powerDrehen, 360, -100, true, true);              // LINKS
+        RotateMotorEx(OUT_AC, powerVor, -720, 0, true, true);                   // VOR
+        RotateMotorEx(OUT_AC, powerDrehen, 360, 100, true, true);               // RECHTS
+        RotateMotorEx(OUT_AC, powerVor, -1800, 0, true, true);                   // VOR
+        while(Sensor4 < sen4)
+        {
+          flasche_kurve_rechts_nt();
+        }
+        RotateMotorEx(OUT_AC, powerVor, -720, 0, true, true);                   // VOR
+        while(RGB3 > sen3)
+        {
+          links_nt();
+        }
+      } else if (FlascheRichtung == "RECHTS") {
+
+      }
+    }*/
+
+
+  // RAMPE
+
+    if(rampeHoch == true && neigungX > -2 && neigungX ) {
+      rampeHoch = false;
+      powerVor = powerNormal;
+    }
+
+    if(rampeHoch == true) {
+      powerVor = powerSchnell;
+    }
+
+    for (int i = 0; i < 500 && neigungX < neigungRampeH; i++) {
+      if (rampeHoch == false) {
+        Off(OUT_AC);
+        Wait(1);
+        if(i > 400){
+          rampeHoch = true;
+        }
+      } else {
+        i = 600;
+      }
+    }
+  }
+}

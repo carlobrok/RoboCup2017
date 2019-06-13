@@ -1,0 +1,59 @@
+//I2C Kommunikation zwischen NXT und Arduino
+int tempovor = 50;
+
+byte adresse = 0x18;                                                               // Arduino Adresse
+byte anzahl_bytes = 10;                                                         // Anzahl der von Arduinoboard erwarteten Daten/Zahlen
+byte gesendet[];                                                                     // Array für gesendete Daten
+byte empfangen[];
+int wert[] = {0,0,0};                                                        // Array für empfangene Daten
+
+bool rampeHoch = false;
+
+int Lese_Arduino()
+{
+    ArrayBuild(gesendet, adresse, 0x00);                               // Sende den Wert 0 zum Arduinoboard
+    I2CBytes(S1, gesendet, anzahl_bytes, empfangen);                        // I2C-Kommunikation
+    wert[0] = empfangen[0] - 128;
+    wert[1] = empfangen[1] - 128;
+    wert[2] = empfangen[2] - 128;
+    TextOut(10,LCD_LINE1,"X: " + NumToStr(wert[0]) + " ");                                       // Die zweite Zahl wird angezeigt
+    TextOut(10,LCD_LINE2,"Y: " + NumToStr(wert[1]) + " ");
+    TextOut(10,LCD_LINE3,"Z: " + NumToStr(wert[2]) + " ");
+    return(empfangen[0]);
+}
+
+task main()
+{
+    SetSensorLowspeed(IN_1);                                             // Die I2C-Kommunikation wird für Port 1 initialisiert.
+
+    int daten = 0;
+    while(true)
+    {
+      OnRev(OUT_AC, tempovor);
+      daten = Lese_Arduino();
+
+
+      if(rampeHoch == true && wert[0] > -2 && wert[0] < 2){
+        rampeHoch = false;
+        tempovor = 50;
+      }
+
+      if(rampeHoch == true) {
+        tempovor = 100;
+      }
+
+
+      for (int i = 0; i < 500 && wert[0] < -12; i++) {
+        if (rampeHoch == false) {
+          Off(OUT_AC);
+          Wait(1);
+          if(i > 400){
+            rampeHoch = true;
+          }
+        } else {
+          i = 500;
+        }
+      }
+
+    }
+}

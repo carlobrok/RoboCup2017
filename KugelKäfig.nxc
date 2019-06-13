@@ -1,0 +1,24 @@
+void hoch()
+{
+  OnFwd(OUT_B,100);
+  Wait(400);
+  Off(OUT_B);
+}
+
+void runter()
+{
+  OnRev(OUT_B,100);
+  Wait(500);
+  Off(OUT_B);
+}
+
+task main()
+{
+  while(true)
+  {
+    hoch();
+    Wait(2000);
+    runter();
+    Wait(2000);
+  }
+}
