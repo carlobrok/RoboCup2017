@@ -1,6 +1,7 @@
 # RoboCup2017
-Code for our Lego NXT and arduino hybrid robot. The code is written for the RoboCup Rescue Line Entry 2017 Rules
+Code for our Lego NXT and arduino hybrid robot. The code is written for the RoboCup Rescue Line Entry 2018 Rules
 
+Our code from 2018: https://github.com/carlobrok/RoboCup2018
 
 
 ## Programmierung
