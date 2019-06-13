@@ -1,0 +1,41 @@
+
+
+unsigned int rawRed3;
+unsigned int rawBlue3;
+
+
+task main() {
+  SetSensorColorFull(S2);
+  SetSensorColorFull(S3);
+
+
+
+
+  while (true){
+
+    unsigned int rawRed2 = ColorSensorRaw(S2, INPUT_RED);
+    unsigned int rawBlue2 = ColorSensorRaw(S2, INPUT_BLUE);
+    unsigned int rawGreen2 = ColorSensorRaw(S2, INPUT_GREEN);
+    int RGB2 = rawRed2 + rawBlue2 + rawGreen2;
+    int redProz2 = (rawRed2 * 100) / RGB2;
+    int blueProz2 = (rawBlue2 * 100) / RGB2;
+    int greenProz2 = (rawGreen2 * 100) / RGB2;
+    TextOut(1, LCD_LINE1, "R: " + NumToStr(redProz2)+"   ");
+    TextOut(1, LCD_LINE2, "B: " + NumToStr(blueProz2)+"   ");
+    TextOut(1, LCD_LINE3, "G: " + NumToStr(greenProz2)+"   ");
+    TextOut(1, LCD_LINE7, "Sensor-2: " + NumToStr(RGB2)+"   ");
+
+    rawRed3 = ColorSensorRaw(S3, INPUT_RED);
+    rawBlue3 = ColorSensorRaw(S3, INPUT_BLUE);
+    unsigned int rawGreen3 = ColorSensorRaw(S3, INPUT_GREEN);
+    int RGB3 = rawRed3 + rawBlue3 + rawGreen3;
+    int redProz3 = (rawRed3 * 100) / RGB3;
+    int blueProz3 = (rawBlue3 * 100) / RGB3;
+    int greenProz3 = (rawGreen3 * 100) / RGB3;
+    TextOut(1, LCD_LINE4, "R: " + NumToStr(redProz3)+"   ");
+    TextOut(1, LCD_LINE5, "B: " + NumToStr(blueProz3)+"   ");
+    TextOut(1, LCD_LINE6, "G: " + NumToStr(greenProz3)+"   ");
+    TextOut(1, LCD_LINE8, "Sensor-3: " + NumToStr(RGB3)+"   ");
+
+  }
+}

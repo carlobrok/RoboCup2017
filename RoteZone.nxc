@@ -1,0 +1,354 @@
+#define PowerVor 70
+#define PowerRueck 70
+#define PowerDrehen 60
+
+#define touchl touchsen[0]
+#define touchr touchsen[1]
+#define touchm touchsen[2]
+#define touchh touchsen[3]
+
+
+
+bool endZone = false;
+int silber1 = 59;
+int silber4 = 59;
+string TextEndung = "         ";
+
+
+// EXTRA VARIABLEN
+
+  int powerVor = 70;
+  int extra = 2;
+
+// SENSOR 1
+
+  int Sensor1;
+  int sch1;
+  int wei1 = 55;
+  int sen1;
+
+// SENSOR 2
+
+  int sen2 = 170;
+
+  unsigned int rawRed2;
+  unsigned int rawBlue2;
+  unsigned int rawGreen2;
+  int RGB2;
+  int redProz2;
+  int blueProz2;
+  int greenProz2;
+
+
+// SENSOR 3
+
+  int sen3 = 170;
+
+  unsigned int rawRed3;
+  unsigned int rawBlue3;
+  unsigned int rawGreen3;
+  int RGB3;
+  int redProz3;
+  int blueProz3;
+  int greenProz3;
+
+
+// SENSOR 4
+
+  int sch4;
+  int Sensor4;
+  int wei4 = 56;
+  int sen4;
+
+
+// I2C-Kommunikation
+
+    byte adresse = 0x18;                                // Arduino Adresse
+    byte anzahl_bytes = 10;                             // Anzahl der von Arduinoboard erwarteten Daten/Zahlen
+    byte gesendet[];                                    // Array für gesendete Daten
+    byte empfangen[];                                   // Array für empfangene Daten
+    int wert[] = {0,0,0};                               // Array für empfangene Daten des Neigungs Sensors
+    int touchsen[] = {0,0,0,0};
+
+
+    int Lese_Arduino()
+    {
+      ArrayBuild(gesendet, adresse, 0x00);                               // Sende den Wert 0 zum Arduinoboard
+      I2CBytes(S1, gesendet, anzahl_bytes, empfangen);                        // I2C-Kommunikation
+      wert[0] = empfangen[0] - 128;
+      wert[1] = empfangen[1] - 128;
+      wert[2] = empfangen[2] - 128;
+      Sensor1 = empfangen[3];
+      Sensor4 = empfangen[4];
+      touchsen[0] = empfangen[5];                           // TOUCH LINKS
+      touchsen[1] = empfangen[6];                           // TOUCH RECHTS
+      touchsen[2] = empfangen[7];                           // TOUCH MITTE
+      touchsen[3] = empfangen[8];                           // TOUCH HINTEN
+      return(empfangen[0]);
+    }
+
+
+
+//-----------Subs----------------
+  //-------- VOR -----------
+
+
+    void vor_nt()
+    {
+      OnRev(OUT_AC, PowerVor);
+    }
+
+    void vor_t(int Zeit_vor)
+    {
+      OnRev(OUT_AC, PowerVor);
+      Wait(Zeit_vor);
+    }
+
+  //--------RUECK-----------
+
+    void rueck_nt()
+    {
+      OnFwd(OUT_AC, PowerRueck);
+    }
+
+    void rueck_t(int Zeit_rueck)
+    {
+      OnFwd(OUT_AC, PowerRueck);
+      Wait(Zeit_rueck);
+    }
+
+  //--------RECHTS----------
+    void rechts_nt()
+    {
+      OnFwd(OUT_C, PowerDrehen);
+      OnRev(OUT_A, PowerDrehen);
+    }
+
+    void rechts_t(int Zeit_rechts)
+    {
+      OnFwd(OUT_C, PowerDrehen);
+      OnRev(OUT_A, PowerDrehen);
+      Wait(Zeit_rechts);
+    }
+
+  //-----LINKS-------------
+    void links_nt()
+    {/* condition */
+      OnFwd(OUT_A, PowerDrehen);
+      OnRev(OUT_C, PowerDrehen);
+    }
+    void links_t(int Zeit_links)
+    {
+      OnFwd(OUT_A, PowerDrehen);
+      OnRev(OUT_C, PowerDrehen);
+      Wait(Zeit_links);
+    }
+
+
+//  ENDZONE  ------------------------
+    void ausrichtenWand()
+    {
+      bool fertig = false;
+      while(fertig == false)
+      {
+        while (touchl != 1 && touchr != 1) {
+          vor_nt();
+        }
+        while (touchl != 1 && touchr == 1) {
+          OnRev(OUT_A, 50);
+        }
+        while (touchl == 1 && touchr != 1) {
+          OnRev(OUT_C, 50);
+        }
+        if (touchl == 1 && touchr == 1) {
+          fertig = true;
+        }
+      }
+      Off(OUT_AC);
+      OnRev(OUT_AC, 40);
+      Wait(700);
+      RotateMotor(OUT_AC, 60, 180);
+    }
+
+    void silberErkennenAusrichten()
+    {
+      TextOut(0,LCD_LINE8,"Silber void!" + TextEndung);
+      if(Sensor1 > silber1 || Sensor4 > silber4)
+      {
+        TextOut(0,LCD_LINE8,"Silber erkannt");
+        endZone = true;
+      }
+    }
+
+    void endZoneAbfahren() {
+      while (touchh != 1 && endZone == true) {
+        rueck_nt();
+      }
+    }
+
+    void endDrehenL() {
+      Off(OUT_AC);
+      RotateMotor(OUT_C, 70, -2000);
+      ausrichtenWand();
+    }
+
+    void endDrehenR() {
+      Off(OUT_AC);
+      RotateMotor(OUT_A, 70, -2000);
+      ausrichtenWand();
+    }
+    // KUGEL KÄFIG
+
+    void kaefigHoch()
+    {
+      OnFwd(OUT_B,100);
+      Wait(400);
+      Off(OUT_B);
+    }
+
+    void kaefigRunter()
+    {
+      OnRev(OUT_B,100);
+      Wait(500);
+      Off(OUT_B);
+    }
+
+    // DISPLAY
+
+      void display(bool startup_anzeige, bool werte_anzeigen) {
+        if(startup_anzeige == true)
+        {
+          ClearScreen();                                  // Display beim Starten
+          TextOut(0,LCD_LINE3,"     Starten     ");
+          Wait(100);
+          TextOut(0,LCD_LINE4,"      .");
+          Wait(100);
+          TextOut(0,LCD_LINE4,"      ..");
+          Wait(100);
+          TextOut(0,LCD_LINE4,"      ...");
+          Wait(100);
+          TextOut(0,LCD_LINE4,"      ....");
+          Wait(100);
+          TextOut(0,LCD_LINE4,"      .....");
+          Wait(100);
+          TextOut(0,LCD_LINE4,"       ....");
+          Wait(100);
+          TextOut(0,LCD_LINE4,"        ...");
+          Wait(100);
+          TextOut(0,LCD_LINE4,"         ..");
+          Wait(100);
+          TextOut(0,LCD_LINE4,"          .");
+          Wait(100);
+          TextOut(0,LCD_LINE4,"           ");
+          Wait(700);
+          ClearScreen();
+          kaefigHoch();
+        }
+        if(werte_anzeigen == true){
+          TextOut(1, LCD_LINE1, "Sensor-1: " + NumToStr(Sensor4)+"   ");
+          TextOut(1, LCD_LINE2, "Sensor-2: " + NumToStr(RGB2)+"   ");
+          TextOut(1, LCD_LINE3, "Sensor-3: " + NumToStr(RGB3)+"   ");
+          TextOut(1, LCD_LINE4, "Sensor-4: " + NumToStr(Sensor1)+"   ");
+          TextOut(1, LCD_LINE5, "Neig. Sen X: " + NumToStr(wert[0])+"   ");
+          TextOut(1, LCD_LINE6, "Tempo: " + NumToStr(powerVor) + "%");
+        }
+      }
+
+      task msgReset()
+      {
+        Wait(3000);
+        ClearLine(LCD_LINE8);
+        TextOut(1,LCD_LINE8,"MSG:                    ");
+      }
+
+      void msg(string text) {
+        TextOut(1,LCD_LINE8,"MSG: " + text);
+        start msgReset;
+      }
+
+      void sensorenInit() {
+        // SENSOR 1
+
+          sch1 = 28 + extra;
+          sen1 = sch1;
+
+        // SENSOR 4
+
+          sch4 = 28 + extra;
+          sen4 = sch4;
+
+          msg("SEN INIT");
+        // SENSOREN DEFINIEREN
+          SetSensorLowspeed(IN_1);                                             // Die I2C-Kommunikation wird für Port 1 initialisiert.
+          SetSensorColorFull(S2);
+          SetSensorColorFull(S3);
+          SetSensorLight(IN_4);
+      }
+
+// ===== TASKS =====
+
+task werte()
+{
+  int daten = 0;
+  while (true) {
+    // RGB RAW WERTE   werden aktualisiert
+
+    rawRed2 = ColorSensorRaw(S2, INPUT_RED);
+    rawBlue2 = ColorSensorRaw(S2, INPUT_BLUE);
+    rawGreen2 = ColorSensorRaw(S2, INPUT_GREEN);
+    RGB2 = rawRed2 + rawBlue2 + rawGreen2;
+    redProz2 = (rawRed2 * 100) / RGB2;
+    blueProz2 = (rawBlue2 * 100) / RGB2;
+    greenProz2 = (rawGreen2 * 100) / RGB2;
+
+    rawRed3 = ColorSensorRaw(S3, INPUT_RED);
+    rawBlue3 = ColorSensorRaw(S3, INPUT_BLUE);
+    rawGreen3 = ColorSensorRaw(S3, INPUT_GREEN);
+    RGB3 = rawRed3 + rawBlue3 + rawGreen3;
+    redProz3 = (rawRed3 * 100) / RGB3;
+    blueProz3 = (rawBlue3 * 100) / RGB3;
+    greenProz3 = (rawGreen3 * 100) / RGB3;
+
+    daten = Lese_Arduino();
+
+    display(false, true);
+  }
+}
+
+
+
+
+
+// MAIN TASK
+
+task main()
+{
+  display(true, false);
+  sensorenInit();
+  start werte;
+
+  while(true)
+  {
+    vor_nt();
+    silberErkennenAusrichten();
+
+    if(endZone == true)
+    {
+      bool abfahren = false;
+      while (endZone == true)
+      {
+        ausrichtenWand();
+        Off(OUT_AC);
+        RotateMotor(OUT_A, PowerDrehen, 500);
+        RotateMotor(OUT_C, PowerDrehen, -500);
+        abfahren = true;
+        while (abfahren == true) {
+          endZoneAbfahren();
+          endDrehenL();
+          endZoneAbfahren();
+          endDrehenR();
+        }
+      }
+    }
+  }
+}

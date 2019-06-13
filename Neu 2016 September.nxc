@@ -1,0 +1,202 @@
+#define speed_aussen_flasche_fahren_rechts 80
+#define speed_aussen_flasche_fahren_links 80
+
+
+
+
+
+
+//-----------Subs----------------
+  //-------- VOR -----------
+
+    sub vor_nt()
+    {
+      OnRev(OUT_AC, 70);
+    }
+    sub vor_t(int Zeit_vor)
+    {
+      OnRev(OUT_AC, 70);
+      Wait(Zeit_vor);
+    }
+
+  //--------RUECK-----------
+
+    sub rueck_nt()
+    {
+      OnFwd(OUT_AC, 50);
+    }
+
+    sub rueck_t(int Zeit_rueck)
+    {
+      OnFwd(OUT_AC, 50);
+      Wait(Zeit_rueck);
+    }
+
+  //--------RECHTS----------
+    sub rechts_nt()
+    {
+      OnFwd(OUT_C, 60);
+      OnRev(OUT_A, 60);
+    }
+
+    sub rechts_t(int Zeit_rechts)
+    {
+      OnFwd(OUT_C, 60);
+      OnRev(OUT_A, 60);
+      Wait(Zeit_rechts);
+    }
+
+  //-----LINKS-------------
+    sub links_nt()
+    {
+      OnFwd(OUT_A, 60);
+      OnRev(OUT_C, 60);
+    }
+    sub links_t(int Zeit_links)
+    {
+      OnFwd(OUT_A, 60);
+      OnRev(OUT_C, 60);
+      Wait(Zeit_links);
+    }
+
+  //-------FLASCHE ----------
+    //------KURVE RECHTS---------
+
+
+      sub flasche_kurve_rechts_nt()
+      {
+        OnRev(OUT_C, 23);
+        OnRev(OUT_A, speed_aussen_flasche_fahren_rechts);
+      }
+
+       //------KURVE LINKS---------
+
+
+      sub flasche_kurve_links_nt()
+      {
+        OnRev(OUT_C, 23);
+        OnRev(OUT_A, speed_aussen_flasche_fahren_links);
+      }
+
+
+task main()
+{
+
+  int extra = 2;
+  //----------SENSOR 1------------
+
+  int sch1 = 28 + extra;
+  int wei1 = 55;
+  int sen1 = sch1;
+
+  //----------SENSOR 2 ------------
+
+  int sen2 = 170;
+
+  //---------SENSOR 3 ------------
+
+  int sen3 = 170;
+
+  //----------SENSOR 4------------
+  int sch4 = 28 + extra;
+  int wei4 = 56;
+  int sen4 = sch4;
+
+
+  //-------------------------------------
+  SetSensorLight(IN_1);
+  SetSensorColorFull(S2);
+  SetSensorColorFull(S3);
+  SetSensorLight(IN_4);
+  int i;
+
+  Wait(1000);
+  ClearScreen();
+
+
+  while(true)
+  {
+     vor_nt();
+
+  // ---- RGB RAW WERTE -----------
+
+    unsigned int rawRed2 = ColorSensorRaw(S2, INPUT_RED);
+    unsigned int rawBlue2 = ColorSensorRaw(S2, INPUT_BLUE);
+    unsigned int rawGreen2 = ColorSensorRaw(S2, INPUT_GREEN);
+    int RGB2 = rawRed2 + rawBlue2 + rawGreen2;
+    int redProz2 = (rawRed2 * 100) / RGB2;
+    int blueProz2 = (rawBlue2 * 100) / RGB2;
+    int greenProz2 = (rawGreen2 * 100) / RGB2;
+
+    unsigned int rawRed3 = ColorSensorRaw(S3, INPUT_RED);
+    unsigned int rawBlue3 = ColorSensorRaw(S3, INPUT_BLUE);
+    unsigned int rawGreen3 = ColorSensorRaw(S3, INPUT_GREEN);
+    int RGB3 = rawRed3 + rawBlue3 + rawGreen3;
+    int redProz3 = (rawRed3 * 100) / RGB3;
+    int blueProz3 = (rawBlue3 * 100) / RGB3;
+    int greenProz3 = (rawGreen3 * 100) / RGB3;
+
+
+    TextOut(1, LCD_LINE1, "Sensor-1: " + NumToStr(SENSOR_1)+"   ");
+    TextOut(1, LCD_LINE2, "Sensor-2: " + NumToStr(RGB2)+"   ");
+    TextOut(1, LCD_LINE3, "Sensor-3: " + NumToStr(RGB3)+"   ");
+    TextOut(1, LCD_LINE4, "Sensor-4: " + NumToStr(SENSOR_4)+"   ");
+
+
+//------- LINIE FAHREN -------
+
+  //------- INNEN --------------
+
+     if(RGB2 < sen2)
+     {
+       links_t(200);
+     }
+
+     if(RGB3 < sen3)
+     {
+       rechts_t(200);
+     }
+// --------GRÜN-----------
+     if(greenProz2 > 40)
+     {
+       vor_t(150);
+       links_t(1000);
+     }
+
+     if(greenProz3 > 40)
+     {
+       vor_t(150);
+       rechts_t(1000);
+     }
+
+
+ //------ AU�EN ------------
+     if(SENSOR_1 < sen1)
+     {
+       links_t(350);
+     }
+     if(SENSOR_4 < sen4)
+     {
+       rechts_t(350);
+     }
+
+  //------ FLASCHE ----------
+   if(SENSOR_2 == 100)
+   {
+     rueck_t(750);
+     links_t(1000);
+     vor_t(1100);
+     rechts_t(900);
+     vor_t(1000);
+     while(SENSOR_4 > sen4)
+     {
+       flasche_kurve_rechts_nt();
+     }
+     vor_t(300);
+     while(SENSOR_3 > sen3)
+     {
+       links_nt();
+     }
+   }
+  }
+}

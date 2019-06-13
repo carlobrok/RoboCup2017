@@ -1,0 +1,20 @@
+if(Sensor1 > sen1)
+{
+  msg("SEN 1");
+  for (int i = 0; i < 350; i++) {
+    Wait(1);
+    links_nt();
+    /*if(greenProz3 > 40 && blueProz3 <= 30 && redProz3 <= 30)
+    {
+      vor_t(400);
+      rechts_t(1200);
+      msg("GRUEN R");
+      i = 400;
+    }*/
+    if (Sensor4 > sen4) {
+    //  rechts_t(500);
+      vor_t(300);
+      i = 400;
+    }
+  }
+}

@@ -1,0 +1,26 @@
+// RECHTS
+void rechts()                // Rechts für Zeit
+{
+  OnFwdSync(OUT_AC, 60, -100);
+}
+
+// LINKS
+void links()
+{
+  OnFwdSync(OUT_AC, 60, 100);
+}
+task tachoCount() {
+  while (true) {
+    NumOut(0,LCD_LINE1, MotorTachoCount(OUT_A));
+    NumOut(0,LCD_LINE3, MotorTachoCount(OUT_C));
+  }
+}
+
+task main()
+{
+  start tachoCount;
+  while(true)
+  {
+
+  }
+}

@@ -1,0 +1,191 @@
+#define touchl touchsen[0]
+#define touchr touchsen[1]
+#define touchm touchsen[2]
+#define touchh touchsen[3]
+
+// SENSOR 1
+
+  int Sensor1;
+
+// SENSOR 2
+
+  unsigned int rawRed2;
+  unsigned int rawBlue2;
+  unsigned int rawGreen2;
+  int RGB2;
+  int redProz2;
+  int blueProz2;
+  int greenProz2;
+
+
+// SENSOR 3
+
+  unsigned int rawRed3;
+  unsigned int rawBlue3;
+  unsigned int rawGreen3;
+  int RGB3;
+  int redProz3;
+  int blueProz3;
+  int greenProz3;
+
+
+// SENSOR 4
+
+  int Sensor4;
+
+
+// I2C-Kommunikation
+
+    byte adresse = 0x18;                                // Arduino Adresse
+    byte anzahl_bytes = 10;                             // Anzahl der von Arduinoboard erwarteten Daten/Zahlen
+    byte gesendet[];                                    // Array für gesendete Daten
+    byte empfangen[];                                   // Array für empfangene Daten
+    int wert[] = {0,0,0};                               // Array für empfangene Daten des Neigungs Sensors
+    int touchsen[] = {0,0,0,0};
+
+
+    int Lese_Arduino()
+    {
+      ArrayBuild(gesendet, adresse, 0x00);                               // Sende den Wert 0 zum Arduinoboard
+      I2CBytes(S1, gesendet, anzahl_bytes, empfangen);                        // I2C-Kommunikation
+      wert[0] = empfangen[0] - 128;
+      wert[1] = empfangen[1] - 128;
+      wert[2] = empfangen[2] - 128;
+      Sensor1 = empfangen[3];
+      Sensor4 = empfangen[4];
+      touchsen[0] = empfangen[5];                           // TOUCH LINKS
+      touchsen[1] = empfangen[6];                           // TOUCH RECHTS
+      touchsen[2] = empfangen[7];                           // TOUCH MITTE
+      touchsen[3] = empfangen[8];                           // TOUCH HINTEN
+      return(empfangen[0]);
+    }
+
+    // KUGEL KÄFIG
+
+    void kaefigHoch()
+    {
+      OnFwd(OUT_B,100);
+      Wait(1000);
+      Off(OUT_B);
+    }
+
+    void kaefigRunter()
+    {
+      OnRev(OUT_B,100);
+      Wait(1000);
+      Off(OUT_B);
+    }
+
+
+
+
+    // DISPLAY
+
+    void display(bool startup_anzeige, bool werte_anzeigen) {
+      if(startup_anzeige == true)
+      {
+        ClearScreen();                                  // Display beim Starten
+        TextOut(0,LCD_LINE3,"     Starten     ");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"      .");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"      ..");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"      ...");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"      ....");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"      .....");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"       ....");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"        ...");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"         ..");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"          .");
+        Wait(100);
+        TextOut(0,LCD_LINE4,"           ");
+        Wait(700);
+        ClearScreen();
+        kaefigHoch();
+      }
+      if(werte_anzeigen == true){
+        TextOut(1, LCD_LINE1, "LS1: " + NumToStr(Sensor4)+"   ");
+        TextOut(60 ,LCD_LINE1,"TL:" + NumToStr(touchl));
+        TextOut(1, LCD_LINE2, "LS2: " + NumToStr(RGB2)+"   ");
+        TextOut(60 ,LCD_LINE2,"TR:" + NumToStr(touchr));
+        TextOut(1, LCD_LINE3, "LS3: " + NumToStr(RGB3)+"   ");
+        TextOut(60 ,LCD_LINE3,"TM:" + NumToStr(touchm));
+        TextOut(1, LCD_LINE4, "LS4: " + NumToStr(Sensor1)+"   ");
+        TextOut(60 ,LCD_LINE4,"TH:" + NumToStr(touchh));
+        TextOut(1, LCD_LINE5, "NS-X: " + NumToStr(wert[0])+"   ");
+      }
+    }
+
+
+    task msgReset()
+    {
+      Wait(3000);
+      ClearLine(LCD_LINE8);
+      TextOut(1,LCD_LINE8,"MSG:                    ");
+    }
+
+    void msg(string text) {
+      TextOut(1,LCD_LINE8,"MSG: " + text);
+      start msgReset;
+    }
+
+    void sensorenInit() {
+        msg("SEN INIT");
+    // SENSOREN DEFINIEREN
+      SetSensorLowspeed(IN_1);                                             // Die I2C-Kommunikation wird für Port 1 initialisiert.
+      SetSensorColorFull(S2);
+      SetSensorColorFull(S3);
+    }
+
+
+// ===== TASKS =====
+
+task werte()
+{
+  int daten = 0;
+  while (true) {
+  // RGB RAW WERTE   werden aktualisiert
+
+    rawRed2 = ColorSensorRaw(S2, INPUT_RED);
+    rawBlue2 = ColorSensorRaw(S2, INPUT_BLUE);
+    rawGreen2 = ColorSensorRaw(S2, INPUT_GREEN);
+    RGB2 = rawRed2 + rawBlue2 + rawGreen2;
+    redProz2 = (rawRed2 * 100) / RGB2;
+    blueProz2 = (rawBlue2 * 100) / RGB2;
+    greenProz2 = (rawGreen2 * 100) / RGB2;
+
+    rawRed3 = ColorSensorRaw(S3, INPUT_RED);
+    rawBlue3 = ColorSensorRaw(S3, INPUT_BLUE);
+    rawGreen3 = ColorSensorRaw(S3, INPUT_GREEN);
+    RGB3 = rawRed3 + rawBlue3 + rawGreen3;
+    redProz3 = (rawRed3 * 100) / RGB3;
+    blueProz3 = (rawBlue3 * 100) / RGB3;
+    greenProz3 = (rawGreen3 * 100) / RGB3;
+
+    daten = Lese_Arduino();
+
+    display(false, true);
+  }
+}
+
+
+
+// MAIN TASK
+task main()
+{
+  display(true, false);
+  sensorenInit();
+  start werte;
+
+  while(true)
+  {
+
+  }
+}
